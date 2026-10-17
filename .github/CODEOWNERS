@@ -1,5 +1,5 @@
    # Default reviewers for everything
    *                     @sunilrch
 
-   # Extra reviewers for prod change
+   # Extra reviewers for prod changes
    environments/prod/    @sunilrch
