@@ -1,0 +1,21 @@
+# ---------------------------------------------------------------------------
+# Applications registered in the DEV Auth0 tenant.
+# To register a new app: add an entry below, open a PR, review the plan, merge.
+#
+# app_type: spa | regular_web | native | non_interactive (machine-to-machine)
+# ---------------------------------------------------------------------------
+applications:
+  - name: sample-portal-spa
+    description: Customer portal (React SPA)
+    app_type: spa
+    callbacks:
+      - http://localhost:3000/callback
+      - https://portal.dev.example.com/callback
+    logout_urls:
+      - http://localhost:3000
+      - https://portal.dev.example.com
+    web_origins:
+      - http://localhost:3000
+      - https://portal.dev.example.com
+    metadata:
+      owner_team: web-platform

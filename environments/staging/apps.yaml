@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------------------
+# Applications registered in the STAGING Auth0 tenant.
+# To register a new app: add an entry below, open a PR, review the plan, merge.
+#
+# app_type: spa | regular_web | native | non_interactive (machine-to-machine)
+# ---------------------------------------------------------------------------
+applications:
+  - name: sample-portal-spa
+    description: Customer portal (React SPA)
+    app_type: spa
+    callbacks:
+      - https://portal.staging.example.com/callback
+    logout_urls:
+      - https://portal.staging.example.com
+    web_origins:
+      - https://portal.staging.example.com
+    metadata:
+      owner_team: web-platform
+
+  - name: sample-orders-service
+    description: Backend service calling the Orders API
+    app_type: non_interactive
+    api_grants:
+      - audience: https://orders-api.staging.example.com
+        scopes:
+          - read:orders
+          - write:orders
+    metadata:
+      owner_team: orders
