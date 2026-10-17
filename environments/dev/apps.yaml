@@ -19,3 +19,4 @@ applications:
       - https://portal.dev.example.com
     metadata:
       owner_team: web-platform
+

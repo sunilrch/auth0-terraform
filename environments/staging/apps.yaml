@@ -17,13 +17,3 @@ applications:
     metadata:
       owner_team: web-platform
 
-  - name: sample-orders-service
-    description: Backend service calling the Orders API
-    app_type: non_interactive
-    api_grants:
-      - audience: https://orders-api.staging.example.com
-        scopes:
-          - read:orders
-          - write:orders
-    metadata:
-      owner_team: orders
