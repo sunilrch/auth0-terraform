@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       max-parallel: 1          # apply dev -> qa -> staging -> prod in order
       matrix:
-        env: [dev, qa, staging, prod]
+        env: [dev]
 
     # GitHub Environment per tenant: holds that tenant's secrets and,
     # for staging/prod, required reviewers before apply.
