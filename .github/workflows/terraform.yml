@@ -23,7 +23,7 @@ jobs:
       matrix:
         env: [dev, qa, staging, prod]
 
-    # GitHub Environment per tenant: holds that tenant's secrets and,
+    # GitHub Environment per tenant: hold that tenant's secrets and,
     # for staging/prod, required reviewers before apply.
     environment: ${{ github.event_name == 'push' && matrix.env || format('{0}-plan', matrix.env) }}
 
