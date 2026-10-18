@@ -1,0 +1,13 @@
+# Roles in the DEV tenant. Assign them to users in the dashboard or via your user-management process.
+roles:
+  - name: orders-viewer
+    description: Can view orders
+    permissions:
+      - api: https://orders-api.dev.yourco.com
+        scopes: [read:orders]
+
+  - name: orders-admin
+    description: Can view and change orders
+    permissions:
+      - api: https://orders-api.dev.yourco.com
+        scopes: [read:orders, write:orders]

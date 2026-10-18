@@ -6,3 +6,10 @@ output "github_role_arn" {
 output "state_bucket" {
   value = aws_s3_bucket.state.bucket
 }
+
+output "github_environments" {
+  value = concat(
+    [for k, e in github_repository_environment.apply : e.environment],
+    [for k, e in github_repository_environment.plan : e.environment],
+  )
+}

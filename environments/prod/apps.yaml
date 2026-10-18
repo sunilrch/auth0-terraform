@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Applications registered in the PRODUCTION Auth0 tenant.
+# Applications registered in the PROD tenant.
 # To register a new app: add an entry below, open a PR, review the plan, merge.
 #
 # app_type: spa | regular_web | native | non_interactive (machine-to-machine)
@@ -9,11 +9,19 @@ applications:
     description: Customer portal (React SPA)
     app_type: spa
     callbacks:
-      - https://portal.example.com/callback
+      - https://portal.yourco.com/callback
     logout_urls:
-      - https://portal.example.com
+      - https://portal.yourco.com
     web_origins:
-      - https://portal.example.com
+      - https://portal.yourco.com
     metadata:
       owner_team: web-platform
 
+  - name: orders-sync-job
+    description: Nightly job reading orders (machine-to-machine)
+    app_type: non_interactive
+    api_grants:
+      - audience: https://orders-api.yourco.com
+        scopes: [read:orders]
+    metadata:
+      owner_team: orders

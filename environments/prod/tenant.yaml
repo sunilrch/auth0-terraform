@@ -1,0 +1,23 @@
+# Tenant-wide settings for the PROD tenant.
+settings:
+  friendly_name: YourCo (prod)
+  support_email: support@yourco.com
+  support_url: https://yourco.com/support
+  session_lifetime_hours: 72        # max login session
+  idle_session_lifetime_hours: 24   # logged out after this long without activity
+  enabled_locales: [en]
+
+security:
+  brute_force_protection: true      # block an account/IP pair after too many failed logins
+  brute_force_max_attempts: 10
+  suspicious_ip_throttling: true    # slow down IPs attacking many accounts
+  breached_password_detection: false  # needs a paid Auth0 plan
+
+mfa:
+  policy: all-applications             # never | all-applications | confidence-score (paid)
+  otp: true                  # authenticator apps (Google Authenticator, Authy, ...)
+  recovery_code: true
+
+actions:
+  add_roles_to_tokens: true            # put the user's roles into ID/access tokens
+  claims_namespace: https://yourco.com # claim name becomes https://yourco.com/roles

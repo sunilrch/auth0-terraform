@@ -1,0 +1,12 @@
+# APIs registered in the PROD tenant.
+# rbac: true -> users/apps get permissions through roles, and tokens carry a "permissions" list.
+apis:
+  - name: Orders API
+    identifier: https://orders-api.yourco.com
+    rbac: true
+    token_lifetime_seconds: 86400
+    scopes:
+      - name: read:orders
+        description: Read orders
+      - name: write:orders
+        description: Create and update orders

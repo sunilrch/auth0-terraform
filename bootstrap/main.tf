@@ -17,9 +17,9 @@ locals {
 resource "aws_s3_bucket" "state" {
   bucket = var.state_bucket_name
 
-  # lifecycle {
-    force_destroy = true # holds every tenant's state - never delete by accident
-  # }
+  lifecycle {
+    prevent_destroy = true # holds every tenant's state - never delete by accident
+  }
 }
 
 resource "aws_s3_bucket_versioning" "state" {
