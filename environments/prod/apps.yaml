@@ -9,11 +9,11 @@ applications:
     description: Customer portal (React SPA)
     app_type: spa
     callbacks:
-      - https://portal.yourco.com/callback
+      - https://portal.Sunil Lab.com/callback
     logout_urls:
-      - https://portal.yourco.com
+      - https://portal.Sunil Lab.com
     web_origins:
-      - https://portal.yourco.com
+      - https://portal.Sunil Lab.com
     metadata:
       owner_team: web-platform
 
@@ -21,7 +21,7 @@ applications:
     description: Nightly job reading orders (machine-to-machine)
     app_type: non_interactive
     api_grants:
-      - audience: https://orders-api.yourco.com
+      - audience: https://orders-api.Sunil Lab.com
         scopes: [read:orders]
     metadata:
       owner_team: orders

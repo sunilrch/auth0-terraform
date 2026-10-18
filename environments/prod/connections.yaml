@@ -2,7 +2,7 @@
 # strategy: auth0 (email + password database) | google-oauth2
 # enabled_for_apps: all | [list of app names from apps.yaml]
 connections:
-  - name: yourco-users
+  - name: users-db
     strategy: auth0
     password_policy: good      # none | low | fair | good | excellent
     disable_signup: false      # true = only admins can create users

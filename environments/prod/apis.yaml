@@ -2,7 +2,7 @@
 # rbac: true -> users/apps get permissions through roles, and tokens carry a "permissions" list.
 apis:
   - name: Orders API
-    identifier: https://orders-api.yourco.com
+    identifier: https://orders-api.Sunil Lab.com
     rbac: true
     token_lifetime_seconds: 86400
     scopes:
