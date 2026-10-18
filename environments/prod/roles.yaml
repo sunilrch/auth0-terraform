@@ -3,11 +3,11 @@ roles:
   - name: orders-viewer
     description: Can view orders
     permissions:
-      - api: https://orders-api.Sunil Lab.com
+      - api: https://orders-api.sunilchaudhari.live
         scopes: [read:orders]
 
   - name: orders-admin
     description: Can view and change orders
     permissions:
-      - api: https://orders-api.Sunil Lab.com
+      - api: https://orders-api.sunilchaudhari.live
         scopes: [read:orders, write:orders]

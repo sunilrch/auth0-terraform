@@ -27,7 +27,7 @@ applications:
     description: Nightly job reading orders (machine-to-machine)
     app_type: non_interactive
     api_grants:
-      - audience: https://orders-api.dev.Sunil Lab.com
+      - audience: https://orders-api.dev.sunilchaudhari.live
         scopes: [read:orders]
     metadata:
       owner_team: orders
