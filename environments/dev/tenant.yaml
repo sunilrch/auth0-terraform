@@ -1,8 +1,8 @@
 # Tenant-wide settings for the DEV tenant.
 settings:
-  friendly_name: YourCo (dev)
-  support_email: support@yourco.com
-  support_url: https://dev.yourco.com/support
+  friendly_name: Sunil Lab (dev)
+  support_email: support@Sunil Lab.com
+  support_url: https://dev.Sunil Lab.com/support
   session_lifetime_hours: 72        # max login session
   idle_session_lifetime_hours: 24   # logged out after this long without activity
   enabled_locales: [en]
@@ -20,4 +20,4 @@ mfa:
 
 actions:
   add_roles_to_tokens: true            # put the user's roles into ID/access tokens
-  claims_namespace: https://yourco.com # claim name becomes https://yourco.com/roles
+  claims_namespace: https://Sunil Lab.com # claim name becomes https://Sunil Lab.com/roles
