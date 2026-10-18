@@ -1,129 +1,112 @@
 # auth0-terraform
 
-Registers client applications in our four Auth0 tenants — **dev, qa, staging, prod** — using Terraform. Each tenant has its own folder, its own state, and its own credentials. App teams register an application by editing a YAML file and opening a PR.
+Everything about our Auth0 tenants (dev, qa, staging, prod) is defined in this repo and applied by Terraform:
+tenant settings, security, MFA, login methods, APIs, roles, login Actions and applications.
+The AWS state storage and the GitHub environments/secrets/branch rules are Terraform too (`bootstrap/`).
+
+The only things done by hand are the ones no API exists for: **creating a tenant** and the
+**first `terraform-provisioner` app** in it (Terraform needs it to log in).
+
+## Layout
 
 ```
-auth0-terraform/
-├── modules/auth0-client/        # reusable module: one Auth0 application
-│   ├── main.tf                  # auth0_client, auth0_client_credentials, auth0_client_grant
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── versions.tf
-├── environments/
-│   ├── dev/                     # one folder per tenant
-│   │   ├── apps.yaml            # <-- the applications registered in this tenant
-│   │   ├── main.tf              # reads apps.yaml, calls the module per app
-│   │   ├── variables.tf / outputs.tf
-│   │   ├── terraform.tfvars     # environment name, app-name suffix
-│   │   └── backend.hcl          # remote state location for this tenant
-│   ├── qa/
-│   ├── staging/
-│   └── prod/
-└── .github/workflows/terraform.yml   # plan on PR, apply on merge
+bootstrap/                      # run by an admin from a laptop - never by the pipeline
+  main.tf                       # S3 state bucket, GitHub OIDC provider, IAM role for Actions
+  github.tf                     # GitHub environments, approvals, secrets, main-branch ruleset
+  variables.tf                  # which environments exist, their Auth0 domain/client id, reviewers
+  secrets.auto.tfvars.example   # copy to secrets.auto.tfvars (git-ignored) for provisioner secrets
+  backend.tf.example            # rename to backend.tf after the first apply (moves state to S3)
+
+modules/
+  tenant/                       # everything inside one tenant, driven by the YAML files below
+  auth0-client/                 # one application
+
+environments/<env>/             # one folder per tenant, applied by the pipeline
+  tenant.yaml                   # settings, session lifetimes, brute-force/bot protection, MFA, Actions
+  connections.yaml              # login methods (email/password database, Google) + which apps use them
+  apis.yaml                     # APIs (resource servers) and their scopes
+  roles.yaml                    # roles and the API permissions they grant
+  apps.yaml                     # applications (SPA, web, native, machine-to-machine)
+  main.tf / backend.hcl         # wiring + state location
+
+.github/workflows/terraform.yml # plan on PR, apply on merge (dev -> qa -> staging -> prod)
 ```
 
-## Registering an application
+## Day-to-day: changing anything in a tenant
 
-1. Edit `environments/<env>/apps.yaml` and add an entry:
+1. `git checkout -b my-change`
+2. Edit the YAML for that environment (e.g. add an app to `environments/dev/apps.yaml`).
+3. `terraform fmt -recursive`, commit, push, open a PR - the plan for each tenant is posted on the PR.
+4. Merge. dev applies automatically; qa / staging / prod wait for approval in the Actions run.
 
-   ```yaml
-   - name: billing-web
-     description: Billing admin UI
-     app_type: regular_web          # spa | regular_web | native | non_interactive
-     callbacks:    [https://billing.dev.example.com/callback]
-     logout_urls:  [https://billing.dev.example.com]
-     web_origins:  [https://billing.dev.example.com]
-     metadata:
-       owner_team: billing
-   ```
+Never change these things in the Auth0 dashboard: the next run puts them back to what git says.
 
-   For a machine-to-machine app use `app_type: non_interactive` and list the APIs it calls:
+## Building everything from scratch
 
-   ```yaml
-     api_grants:
-       - audience: https://orders-api.dev.example.com
-         scopes: [read:orders]
-   ```
+### 0. Manual, once per tenant (no API exists for these)
+1. **Create the tenant** in the Auth0 dashboard (tenant dropdown -> Create tenant).
+2. **Create `terraform-provisioner`**: Applications -> Create Application -> Machine to Machine ->
+   Auth0 Management API -> **Client Access**, select:
 
-   The API (resource server) must already exist in that tenant.
+   | Area | Permissions |
+   |---|---|
+   | Applications | `read:clients` `create:clients` `update:clients` `delete:clients` |
+   | App keys / credentials | `read:client_keys` `update:client_keys` `read:client_credentials` `create:client_credentials` `update:client_credentials` `delete:client_credentials` |
+   | App -> API grants | `read:client_grants` `create:client_grants` `update:client_grants` `delete:client_grants` |
+   | APIs | `read:resource_servers` `create:resource_servers` `update:resource_servers` `delete:resource_servers` |
+   | Login methods | `read:connections` `create:connections` `update:connections` `delete:connections` |
+   | Roles | `read:roles` `create:roles` `update:roles` `delete:roles` |
+   | Tenant settings | `read:tenant_settings` `update:tenant_settings` |
+   | Attack protection | `read:attack_protection` `update:attack_protection` |
+   | MFA | `read:guardian_factors` `update:guardian_factors` `read:mfa_policies` `update:mfa_policies` |
+   | Actions | `read:actions` `create:actions` `update:actions` `delete:actions` |
 
-2. Open a PR. The pipeline posts a `terraform plan` for every tenant as a PR comment.
-3. Merge to `main`. The pipeline applies dev → qa → staging → prod in order, pausing for approval where the GitHub Environment requires it.
-4. Get the client ID (and secret for confidential apps):
+   Note its domain, client ID and client secret.
 
-   ```bash
-   terraform output client_ids
-   terraform output -json client_secrets   # sensitive
-   ```
+### 1. Bootstrap AWS + GitHub (from your laptop)
+Needs: AWS admin credentials, Terraform >= 1.10, and a GitHub fine-grained token with
+**Administration, Environments, Secrets: read & write** on this repo.
 
-Promote an app by copying its entry into the next tenant's `apps.yaml` with that tenant's URLs.
+```powershell
+cd bootstrap
+Copy-Item secrets.auto.tfvars.example secrets.auto.tfvars   # fill in the provisioner secret(s)
+$env:GITHUB_TOKEN = "<fine-grained token>"
+# check variables.tf -> environments (domain + client id per environment)
 
-## Tenants
+terraform init
+terraform apply          # S3 bucket, OIDC provider, IAM role, GitHub environments + secrets + ruleset
 
-| Environment | Tenant | AUTH0_DOMAIN |
-|---|---|---|
-| dev     | `dev-kzcv7r6k5z6za53d` (US) | `dev-kzcv7r6k5z6za53d.us.auth0.com` |
-| qa      | _not created yet_ | |
-| staging | _not created yet_ | |
-| prod    | _not created yet_ | |
+Rename-Item backend.tf.example backend.tf
+terraform init -migrate-state                              # move bootstrap state into the bucket
+Remove-Item terraform.tfstate, terraform.tfstate.backup -ErrorAction SilentlyContinue
+```
 
-## One-time setup
+If you created a `main` ruleset by hand before, delete it first (Settings -> Rules), or you'll have two.
 
-### 1. Terraform M2M app in each tenant
-Terraform needs its own credentials in **each** of the 4 tenants. In every tenant:
+### 2. Everything inside the tenant
+Open a PR that touches `environments/` (or Actions -> Run workflow to just see the plans), merge it,
+approve. The pipeline creates tenant settings, security, MFA, connections, APIs, roles, Actions and apps.
 
-1. Applications → Create Application → *Machine to Machine*, name it `terraform-provisioner`.
-2. Authorise it for the **Auth0 Management API** with at least these scopes:
-   `read:clients`, `create:clients`, `update:clients`, `delete:clients`,
-   `read:client_keys`, `update:client_keys`,
-   `read:client_grants`, `create:client_grants`, `update:client_grants`, `delete:client_grants`,
-   `read:resource_servers`.
-3. Note its domain, client ID and client secret.
-
-This bootstrap app is created by hand once; everything else is managed by Terraform.
-
-### 2. Remote state
-Create an S3 bucket and a DynamoDB lock table (or switch `backend "s3"` in `main.tf` to your organisation's backend), then update the `bucket` and `dynamodb_table` values in each `environments/*/backend.hcl`. Each tenant uses a separate state key.
-
-### 3. GitHub Environments and secrets
-In the repo → Settings → Environments, create:
-
-| Environment     | Used for                  | Protection                    |
-|-----------------|---------------------------|-------------------------------|
-| `dev-plan`, `qa-plan`, `staging-plan`, `prod-plan` | PR plans | none |
-| `dev`, `qa`     | apply on merge            | none (or optional)            |
-| `staging`, `prod` | apply on merge          | required reviewers            |
-
-Add these secrets to **each** environment (the plan and apply environment of the same tenant use the same values):
-
-- `AUTH0_DOMAIN` — e.g. `mycompany-dev.eu.auth0.com`
-- `AUTH0_CLIENT_ID` / `AUTH0_CLIENT_SECRET` — from the `terraform-provisioner` app in that tenant
-- `AWS_STATE_ROLE_ARN` — IAM role the workflow assumes (via OIDC) to read/write state
-
-Also enable branch protection on `main` so changes only land through reviewed PRs.
+### Adding qa / staging / prod
+Each needs its **own** tenant (tenant settings, connections and Actions can't be shared between environments).
+1. Do step 0 in the new tenant.
+2. Add it to `environments` in `bootstrap/variables.tf` and its secret to `secrets.auto.tfvars`; `terraform apply` in `bootstrap/`.
+3. Add it to `matrix.env` in `.github/workflows/terraform.yml`, PR, merge, approve.
 
 ## Running locally
 
-```bash
-cd environments/dev
-export AUTH0_DOMAIN=mycompany-dev.eu.auth0.com
-export AUTH0_CLIENT_ID=...
-export AUTH0_CLIENT_SECRET=...
-terraform init -backend-config=backend.hcl
+```powershell
+cd environments\dev
+$env:AUTH0_DOMAIN        = "dev-kzcv7r6k5z6za53d.us.auth0.com"
+$env:AUTH0_CLIENT_ID     = '...'
+$env:AUTH0_CLIENT_SECRET = '...'
+terraform init -backend-config="backend.hcl"
 terraform plan
 ```
 
-## Importing applications that already exist
-
-```bash
-terraform import 'module.client["existing-app"].auth0_client.this' <client_id>
-terraform import 'module.client["existing-app"].auth0_client_credentials.this' <client_id>
-```
-
-Add a matching entry to `apps.yaml` first, then run `terraform plan` and adjust until there's no diff.
-
 ## Notes
-
-- Client secrets end up in Terraform state, so the state bucket must be encrypted and access-restricted.
-- `spa` and `native` apps are public clients (no secret); `regular_web` and `non_interactive` get a secret.
-- Refresh token rotation is on by default for apps that use the `refresh_token` grant.
+- Client secrets end up in Terraform state; the state bucket is encrypted, versioned and private,
+  and the pipeline's role can only reach `auth0/*` in it.
+- `spa` and `native` apps have no secret; `regular_web` and `non_interactive` do.
+- Breached-password detection and adaptive MFA need a paid Auth0 plan (`tenant.yaml`).
+- Google login without `client_id` uses Auth0's dev keys - fine for dev, set real keys for prod.

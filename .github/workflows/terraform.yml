@@ -21,7 +21,7 @@ jobs:
       fail-fast: true          # if one tenant fails, stop before the next
       max-parallel: 1          # apply dev -> qa -> staging -> prod in order
       matrix:
-        env: [dev, qa, staging, prod]
+        env: [dev] # add qa, staging, prod once each has its OWN Auth0 tenant (tenant settings can't be shared)
 
     # GitHub Environment per tenant: holds that tenant's secrets and,
     # for staging/prod, required reviewers before apply.

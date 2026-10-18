@@ -1,22 +1,33 @@
 # ---------------------------------------------------------------------------
-# Applications registered in the DEV Auth0 tenant.
+# Applications registered in the DEV tenant.
 # To register a new app: add an entry below, open a PR, review the plan, merge.
 #
 # app_type: spa | regular_web | native | non_interactive (machine-to-machine)
 # ---------------------------------------------------------------------------
 applications:
-  - name: sample-portal-spa
-    description: Customer portal (React SPA)
+  - name: portal-spa
+    description: Customer portal (React SPA) hosted on the kubeadm cluster
     app_type: spa
+    # The SDK redirects back to the site root (window.location.origin), so the
+    # origin itself is the callback. Must match the Ingress host exactly.
     callbacks:
-      - http://localhost:3000/callback
-      - https://portal.dev.example.com/callback
+      - http://localhost:3000
+      - https://portal.dev.sunilchaudhari.live
     logout_urls:
       - http://localhost:3000
-      - https://portal.dev.example.com
+      - https://portal.dev.sunilchaudhari.live
     web_origins:
       - http://localhost:3000
-      - https://portal.dev.example.com
+      - https://portal.dev.sunilchaudhari.live
     metadata:
       owner_team: web-platform
+      source_repo: portal-spa
 
+  - name: orders-sync-job
+    description: Nightly job reading orders (machine-to-machine)
+    app_type: non_interactive
+    api_grants:
+      - audience: https://orders-api.dev.yourco.com
+        scopes: [read:orders]
+    metadata:
+      owner_team: orders

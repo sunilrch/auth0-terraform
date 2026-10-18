@@ -1,10 +1,20 @@
 output "client_ids" {
-  description = "Map of application name => Auth0 client ID."
-  value       = { for k, m in module.client : k => m.client_id }
+  value = module.tenant.client_ids
 }
 
 output "client_secrets" {
-  description = "Map of application name => client secret (confidential apps only)."
-  value       = { for k, m in module.client : k => m.client_secret if m.client_secret != null }
-  sensitive   = true
+  value     = module.tenant.client_secrets
+  sensitive = true
+}
+
+output "api_identifiers" {
+  value = module.tenant.api_identifiers
+}
+
+output "connections" {
+  value = module.tenant.connections
+}
+
+output "roles" {
+  value = module.tenant.roles
 }
